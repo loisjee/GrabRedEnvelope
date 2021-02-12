@@ -4,10 +4,11 @@
 "ui";
  
 auto();
-//线程，用于进行抢红包、停止抢红包
+// 线程，用于进行抢红包、停止抢红包
 var _golThread;
-
-//UI界面
+// 红包个数，用于计数
+var total = 0;
+// UI界面
 function myUI(){
     ui.layout(
             <drawer id="drawer">
@@ -44,7 +45,7 @@ function myUI(){
                             About */}
                         <frame>
                             <vertical h="100dp" marginTop="200">
-                            <text w="auto" color="#111111" layout_gravity="center" size="18" text="Version:  1.0.0" />
+                            <text w="auto" color="#111111" layout_gravity="center" size="18" text="Version:  1.0.1" />
                             <text w="auto" layout_gravity="center" color="#111111" size="18" text="Author:  Loisjee" />
                             <text w="auto" layout_gravity="center" color="#111111" size="18" text="wechat:  Loisjee" />
 
@@ -131,39 +132,44 @@ function Main() {
     // while(id("ax7").findOnce())
     requestScreenCapture(false);
     // 红包控件
-    var redEnvelopes = id("auf");
+    var redEnvelopes = text("微信红包");
     var redEnvelopes_x = 0;
     var redEnvelopes_y = 0;
-
+    
     while(true){
         judgeActivity();
         if(redEnvelopes.exists()){
             // 找出所有红包
-            redEnvelopes_point = id("auf").find();
-            if(redEnvelopes_point.length > 0){
-                // 找出最新的红包
-                redEnvelopes_x = redEnvelopes_point[redEnvelopes_point.length - 1].bounds().centerX();
-                redEnvelopes_y = redEnvelopes_point[redEnvelopes_point.length - 1].bounds().centerY();
-                var img = captureScreen();
-                var color = images.pixel(img, redEnvelopes_x, redEnvelopes_y);
-                var point = findColor(img, "#FA9D3B", {
-                    region: [redEnvelopes_x, redEnvelopes_y, 50, 50],
-                    threshold: 4
-                });
-                // 通过颜色判断该红包是否已领取
-                if(point){
+            redEnvelopes_point =  text("微信红包").find();
+            for(var i = 0;i<redEnvelopes_point.length;++i){
+                // 判断该控件是否是红包控件
+
+                if(redEnvelopes_point[i].className() != "android.widget.TextView"){
+                    continue;
+                }
+
+                // text("已被领完").boundsInside()
+
+                var left = redEnvelopes_point[i].bounds().left;
+                var top = redEnvelopes_point[i].bounds().top - 250;
+                var right = redEnvelopes_point[i].bounds().left + 800;
+                var bottom = redEnvelopes_point[i].bounds().bottom;
+                var yiLingQu = text("已领取").boundsInside(left, top, right, bottom).findOnce();
+                var yiBeiLingWan = text("已被领完").boundsInside(left, top, right, bottom).findOnce();
+                // 未领取且未被领完
+                if(yiLingQu == null && yiBeiLingWan == null){
+                    // 该红包未领取
+                    redEnvelopes_x = redEnvelopes_point[i].bounds().centerX();
+                    redEnvelopes_y = redEnvelopes_point[i].bounds().centerY();
                     console.log("------发现新红包------");
                     click(redEnvelopes_x, redEnvelopes_y);
-                    sleep(1000);
+                    sleep(1500);
                     openBox();
                     sleep(1000);
                 }
                 else{
-                    console.log("暂未发现新红包");
+                    console.log("当前红包已领取，等待新红包")
                 }
-            }else{
-                //当前界面没有红包 不作任何处理
-                console.log("暂未发现新红包");
             }
     
       }
@@ -175,13 +181,15 @@ function Main() {
 
 function openBox(){
     console.log("尝试打开新红包")
-    var open = id("f4f");
+    var open = desc("开");
     // 判断控件“开”是否存在
     if(open.exists()){ 
         open.findOne().click();
         console.log("成功领取一个新红包!!!");
-        console.log("----------------------------------------------")
-        sleep(2000);
+        console.log("-----------------------------------")
+        sleep(1000);
+        total++;
+        console.log("----目前共领取" + total + "个-----")
         console.log("返回");
     }else{
         console.log("红包已领取或过期")
@@ -190,4 +198,3 @@ function openBox(){
     back();
 }
      
-
